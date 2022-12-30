@@ -7,7 +7,7 @@ const VideoConverter = () => {
 	const { loaded, ffmpegInstance } = useFfmpeg();
 	const [inputMedia, setInputMedia] = useState<File>();
 	const [outputMedia, setOutputMedia] = useState<string>();
-	const vidRef = useRef(null);
+	const vidRef = useRef<HTMLVideoElement>(null);
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
@@ -48,8 +48,10 @@ const VideoConverter = () => {
 	};
 
 	const handleTimelineClick = (e: React.MouseEvent) => {
-		const clickedPositionX = e.clientX - e.target.offsetLeft;
-		const clickedTime = clickedPositionX / e.target.offsetWidth;
+		if (!vidRef.current) return;
+		const target = e.target as HTMLDivElement;
+		const clickedPositionX = e.clientX - target.offsetLeft;
+		const clickedTime = clickedPositionX / target.offsetWidth;
 
 		vidRef.current.currentTime = clickedTime * vidRef.current.duration;
 	};
