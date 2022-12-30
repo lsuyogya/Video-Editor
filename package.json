@@ -14,7 +14,8 @@
 		"@visx/brush": "^2.17.0",
 		"react": "^18.2.0",
 		"react-dom": "^18.2.0",
-		"react-ffmpeg": "^0.0.35"
+		"react-ffmpeg": "^0.0.35",
+		"sass": "^1.57.1"
 	},
 	"devDependencies": {
 		"@types/react": "^18.0.26",
