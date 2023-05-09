@@ -1,10 +1,10 @@
 import React, { useCallback, useState, useRef } from 'react';
-import { createFFmpeg, fetchFile } from '@ffmpeg/ffmpeg';
+import { createFFmpeg, fetchFile, FFmpeg } from '@ffmpeg/ffmpeg';
 import { useFfmpeg } from '../hooks/useFfmpeg';
 import '../styles/Timeline.scss';
 
 const VideoConverter = () => {
-	const { loaded, ffmpegInstance } = useFfmpeg();
+	const [loaded, ffmpeg] = useFfmpeg();
 	const [inputMedia, setInputMedia] = useState<File>();
 	const [outputMedia, setOutputMedia] = useState<string>();
 	const [thumbnails, setThumbnails] = useState<Array<string>>([]);
@@ -30,12 +30,8 @@ const VideoConverter = () => {
 			return;
 		}
 
-		ffmpegInstance.FS(
-			'writeFile',
-			inputMedia.name,
-			await fetchFile(inputMedia)
-		);
-		await ffmpegInstance.run(
+		ffmpeg.FS('writeFile', inputMedia.name, await fetchFile(inputMedia));
+		await ffmpeg.run(
 			'-i',
 			inputMedia.name,
 			'-t',
@@ -46,7 +42,7 @@ const VideoConverter = () => {
 			'gif',
 			`${inputMedia.name}.gif`
 		);
-		const output = ffmpegInstance.FS('readFile', `${inputMedia.name}.gif`);
+		const output = ffmpeg.FS('readFile', `${inputMedia.name}.gif`);
 		const outUrl = URL.createObjectURL(
 			new Blob([output.buffer], { type: 'image/gif' })
 		);
@@ -77,13 +73,9 @@ const VideoConverter = () => {
 			console.log('interval', interval);
 			console.log('thumbNailNumber', thumbnailNumber);
 
-			ffmpegInstance.FS(
-				'writeFile',
-				inputMedia.name,
-				await fetchFile(inputMedia)
-			);
+			ffmpeg.FS('writeFile', inputMedia.name, await fetchFile(inputMedia));
 
-			await ffmpegInstance.run(
+			await ffmpeg.run(
 				'-i',
 				inputMedia.name,
 				'-vf',
@@ -97,7 +89,7 @@ const VideoConverter = () => {
 			);
 			debugger;
 			const images = imageNames.map(
-				(imageName) => ffmpegInstance.FS('readFile', imageName).buffer
+				(imageName) => ffmpeg.FS('readFile', imageName).buffer
 			);
 
 			// Create URLs for the extracted images
@@ -108,7 +100,7 @@ const VideoConverter = () => {
 			setThumbnailLoaded(true);
 			console.log(thumbnails);
 		}
-		const fileNames = ffmpegInstance.FS('readdir', '/');
+		const fileNames = ffmpeg.FS('readdir', '/');
 		console.log('File Names', fileNames);
 	};
 	// const createThumbnails = useCallback(() => {
