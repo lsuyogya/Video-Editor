@@ -3,7 +3,7 @@ import { createFFmpeg } from '@ffmpeg/ffmpeg';
 
 export const useFfmpeg = () => {
 	const ffmpeg = createFFmpeg({
-		corePath: '/node_modules/@ffmpeg/core/dist/ffmpeg-core.js',
+		corePath: '/Video-Editor/ffmpeg_dist/ffmpeg-core.js', //Core Path set to /Video-Editor/ for github pages
 		log: true,
 	});
 	const [loaded, setLoaded] = useState(false);
