@@ -3,7 +3,7 @@ import { createFFmpeg } from '@ffmpeg/ffmpeg';
 
 export const useFfmpeg = () => {
 	const ffmpeg = createFFmpeg({
-		corePath: '../../../node_modules/@ffmpeg/core/dist/ffmpeg-core.js',
+		corePath: '/core/dist/ffmpeg-core.js',
 		log: true,
 	});
 	const [loaded, setLoaded] = useState(false);
