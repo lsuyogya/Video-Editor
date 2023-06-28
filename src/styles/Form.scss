@@ -1,0 +1,24 @@
+input[type='number']::-webkit-inner-spin-button {
+	-webkit-appearance: none;
+}
+.shortInput {
+	width: 5rem;
+}
+.settingsForm {
+	margin: 1em;
+	display: grid;
+	gap: 0.5em;
+}
+
+.formGroup {
+	display: grid;
+	grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+button {
+	background-color: aliceblue !important;
+	// box-shadow: 3px 3px 5px 1px rgb(182, 182, 182);
+	color: black;
+	width: 10rem;
+	place-self: center;
+}

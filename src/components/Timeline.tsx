@@ -16,23 +16,47 @@ const Timeline: React.FC<TimelineProps> = ({
 	]);
 	const [rulerIndex, setRulerIndex] = useState(0);
 	return (
-		<div className='timeline' onClick={handleTimelineClick} ref={timelineRef}>
-			{rulerArray.map((ruler, i) => (
+		<div
+			className='timeline'
+			style={{ width: vidRef.current?.clientWidth }}
+			onClick={handleTimelineClick}
+			onDrag={handleTimelineClick}
+			ref={timelineRef}>
+			{[...Array(11).keys()].map((ruler) => (
 				<React.Fragment key={ruler}>
-					<div className='rulerMarker'>
-						<div className='rulerMarkerNumber'>{rulerIndex * 10 + ruler}</div>
+					<div
+						className={`rulerMarker ${
+							/* @ts-ignore */ //cuz when duration doesnt exist, timeline is not rendered
+							vidRef.current?.duration <= rulerIndex * 10 + ruler
+								? 'passive'
+								: ''
+						}`}>
+						<div
+							className={`rulerMarkerNumber ${
+								/* @ts-ignore */
+								vidRef.current?.duration <= rulerIndex * 10 + ruler
+									? 'passiveText'
+									: ''
+							}`}>
+							{rulerIndex * 10 + ruler}
+						</div>
 					</div>
-					{[...Array(9).keys()].map((subRuler, i) => {
+					{[...Array(9).keys()].map((subRuler) => {
 						return ruler % 10 !== 0 || ruler === 0 ? (
-							<div className='subRulerMarker' key={ruler * 10 + subRuler}></div>
+							<div
+								className={`subRulerMarker ${
+									/* @ts-ignore */
+									vidRef.current?.duration <=
+									rulerIndex * 10 + ruler + subRuler / 10
+										? 'passive'
+										: ''
+								}`}
+								key={ruler * 10 + subRuler}></div>
 						) : null;
 					})}
 				</React.Fragment>
 			))}
-			<div
-				className='indexMarker'
-				data-xposition={'100px'}
-				ref={indexRef}></div>
+			<div className='indexMarker' data-xposition={'100px'} ref={indexRef} />
 		</div>
 	);
 

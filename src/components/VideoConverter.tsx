@@ -1,30 +1,75 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { fetchFile } from '@ffmpeg/ffmpeg';
 import { useFfmpeg } from '../hooks/useFfmpeg';
 import '../styles/Timeline.scss';
+import '../styles/Form.scss';
+import Timeline from './Timeline';
 
 const VideoConverter = () => {
 	const { loaded, progress, ffmpegInstance, log } = useFfmpeg();
 	const [inputMediaUrl, setInputMediaUrl] = useState('');
 	const [inputMedia, setInputMedia] = useState<File>();
 	const [rulerIndex, setRulerIndex] = useState(0);
-	const [args, setArgs] = useState({ startTime: 0, endTime: 0, format: '' });
+	const [args, setArgs] = useState({
+		startTime: 0,
+		endTime: 0,
+		format: '',
+		frameRate: '60',
+	});
+	const bindings = {
+		startTime: {
+			currentTime: ['Alt', 'l'],
+			minTime: ['Alt', 'Control', 'l'],
+		},
+		endTime: {
+			currentTime: ['Alt', 'k'],
+			maxTime: ['Alt', 'Control', 'k'],
+		},
+	};
+
+	useEffect(() => {
+		function handleKeydown(e: KeyboardEvent) {
+			if (!startTimeRef.current || !endTimeRef.current || !vidRef.current) {
+				console.warn('Cannot work with null video or input ref');
+				return;
+			}
+			if (e.altKey && e.key === bindings.startTime.currentTime[1]) {
+				//@ts-ignore
+				startTimeRef.current.value = vidRef.current.currentTime.toString();
+			}
+			if (e.altKey && e.key === bindings.endTime.currentTime[1]) {
+				//@ts-ignore
+				endTimeRef.current.value = vidRef.current.currentTime.toString();
+			}
+			if (e.altKey && e.ctrlKey && e.key === bindings.startTime.minTime[2]) {
+				//@ts-ignore
+				startTimeRef.current.value = '0';
+			}
+			if (e.altKey && e.ctrlKey && e.key === bindings.endTime.maxTime[2]) {
+				//@ts-ignore
+				endTimeRef.current.value = vidRef.current.duration.toString();
+			}
+		}
+		document.addEventListener('keydown', handleKeydown);
+
+		return () => {
+			document.removeEventListener('keydown', handleKeydown);
+		};
+	}, []);
 
 	const vidRef = useRef<HTMLVideoElement>(null);
 	const timelineRef = useRef<HTMLDivElement>(null);
 	const indexRef = useRef<HTMLDivElement>(null);
+	const startTimeRef = useRef<HTMLInputElement>(null);
+	const endTimeRef = useRef<HTMLInputElement>(null);
 
 	return (
 		<>
 			{loaded ? (
 				<>
 					{inputMediaUrl ? (
-						<>
-							{/* <nav className='navbar'>
-								<ul>
-									<li>Convert</li>
-								</ul>
-							</nav> */}
+						<React.Fragment>
+							{/* Video Source */}
 							<video
 								src={inputMediaUrl}
 								ref={vidRef}
@@ -34,6 +79,7 @@ const VideoConverter = () => {
 								onTimeUpdate={handleTimeUpdate}
 							/>
 
+							{/* TIMELINE */}
 							<div
 								className='timeline'
 								style={{ width: vidRef.current?.clientWidth }}
@@ -42,60 +88,102 @@ const VideoConverter = () => {
 								ref={timelineRef}>
 								{[...Array(11).keys()].map((ruler) => (
 									<React.Fragment key={ruler}>
-										<div className='rulerMarker'>
-											<div className='rulerMarkerNumber'>
+										<div
+											className={`rulerMarker ${
+												/* @ts-ignore */ //cuz when duration doesnt exist, timeline is not rendered
+												vidRef.current?.duration <= rulerIndex * 10 + ruler
+													? 'passive'
+													: ''
+											}`}>
+											<div
+												className={`rulerMarkerNumber ${
+													/* @ts-ignore */
+													vidRef.current?.duration <= rulerIndex * 10 + ruler
+														? 'passiveText'
+														: ''
+												}`}>
 												{rulerIndex * 10 + ruler}
 											</div>
 										</div>
 										{[...Array(9).keys()].map((subRuler) => {
 											return ruler % 10 !== 0 || ruler === 0 ? (
 												<div
-													className='subRulerMarker'
+													className={`subRulerMarker ${
+														/* @ts-ignore */
+														vidRef.current?.duration <=
+														rulerIndex * 10 + ruler + subRuler / 10
+															? 'passive'
+															: ''
+													}`}
 													key={ruler * 10 + subRuler}></div>
 											) : null;
 										})}
 									</React.Fragment>
 								))}
-								<div
-									className='indexMarker'
-									data-xposition={'100px'}
-									ref={indexRef}
-								/>
+								<div className='indexMarker' ref={indexRef} />
 							</div>
-						</>
+						</React.Fragment>
 					) : (
 						<div>Submit a video</div>
 					)}
 					<form>
 						<input type='file' accept='video/*' onChange={handleFileChange} />
 					</form>
-					<form>
-						<legend>Settings</legend>
-						Start Time:{' '}
-						<input
-							type='number'
-							id='startTime'
-							onChange={handleArgChange}
-						/>{' '}
-						<br />
-						End Time:{' '}
-						<input type='number' id='endTime' onChange={handleArgChange} />{' '}
-						<br />
-						Format:{' '}
-						<input
+
+					{inputMediaUrl ? (
+						<form className='settingsForm'>
+							<legend>Settings</legend>
+							<div className='formGroup'>
+								<label htmlFor='startTime'>Start Time</label>
+								<input
+									type='number'
+									id='startTime'
+									ref={startTimeRef}
+									className='shortInput'
+									onChange={handleArgChange}
+								/>
+								<span>Set Current Time (Alt + L)</span>
+								<span>Minimum Time (Ctrl + Alt + L )</span>
+							</div>
+
+							<div className='formGroup'>
+								<label htmlFor='endTime'>End Time</label>
+								<input
+									type='number'
+									id='endTime'
+									ref={endTimeRef}
+									className='shortInput'
+									onChange={handleArgChange}
+								/>
+								<span>Set Current Time (Alt + K)</span>
+								<span>Maximum Time (Ctrl + Alt + K )</span>
+							</div>
+
+							<div className='formGroup'>
+								<label htmlFor='format'>Format</label>
+								{/* <input
 							type='text'
 							id='format'
 							list='formats'
 							onChange={handleArgChange}
-						/>
-						<datalist id='formats'>
-							<option value='mp4' />
-							<option value='mp3' />
-							<option value='gif' />
-						</datalist>
-						<br />
-					</form>
-					<button onClick={handleConvert}>Extract</button>
+						/> */}
+								<select
+									id='format'
+									onChange={handleArgChange}
+									className='shortInput'
+									defaultValue={'mp4'}>
+									<option value='avi' children={'avi'} />
+									<option value='asf' children={'asf'} />
+									<option value='mp3' children={'mp3'} />
+									<option value='mp4' children={'mp4'} />
+									<option value='mpg' children={'mpg'} />
+									<option value='gif' children={'gif'} />
+								</select>
+							</div>
+
+							<button onClick={handleConvert}>Extract</button>
+						</form>
+					) : null}
 					{progress ? <div>Progress: {Math.floor(progress * 100)}%</div> : null}
 				</>
 			) : (
@@ -153,10 +241,7 @@ const VideoConverter = () => {
 			// 'gif',
 			`${inputMedia.name}.${args.format}`
 		);
-		const output = ffmpegInstance.FS(
-			'readFile',
-			`${inputMedia.name}.${args.format}`
-		);
+		const output = ffmpegInstance.FS('readFile', `${inputMedia.name}`);
 		const outUrl = URL.createObjectURL(new Blob([output.buffer]));
 		const link = document.createElement('a');
 		link.href = outUrl;
